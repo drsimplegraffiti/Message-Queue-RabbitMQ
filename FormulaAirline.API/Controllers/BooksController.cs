@@ -3,6 +3,7 @@ using FormulaAirline.API.Data;
 using FormulaAirline.API.Models;
 using FormulaAirline.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormulaAirline.API.Controllers
 {
@@ -29,10 +30,38 @@ namespace FormulaAirline.API.Controllers
         {
             if(!ModelState.IsValid)
                 return BadRequest();
+            
+            var existingBooking = await _context.Bookings
+                .FirstOrDefaultAsync(b => b.Id == booking.Id);
+            
+            if(existingBooking != null)
+                return BadRequest("Booking already exists");
+
+            _logger.LogInformation("Creating booking");
+
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
             // _messageProducer.SendingMessage(booking);
             _messageProducer.SendingMessage<Booking>(booking); // This is the same as the line above
+            return Ok(booking);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetBookings()
+        {
+            var bookings = await _context.Bookings.ToListAsync();
+            return Ok(bookings);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetBooking(int id)
+        {
+            var booking = await _context.Bookings
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if(booking == null)
+                return NotFound();
+
             return Ok(booking);
         }
     }
