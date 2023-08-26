@@ -32,10 +32,13 @@ namespace FormulaAirline.API.Controllers
                 return BadRequest();
             
             var existingBooking = await _context.Bookings
-                .FirstOrDefaultAsync(b => b.Id == booking.Id);
+                .FirstOrDefaultAsync(b => b.PassengerName == booking.PassengerName);
             
             if(existingBooking != null)
-                return BadRequest("Booking already exists");
+                return BadRequest(new ErrorResponse(){
+                    Message = "Booking already exists",
+                    StatusCode = 400
+                });
 
             _logger.LogInformation("Creating booking");
 
@@ -64,5 +67,13 @@ namespace FormulaAirline.API.Controllers
 
             return Ok(booking);
         }
-    }
+
+        // create error response class
+        public class ErrorResponse
+        {
+            public string Message { get; set; } = "An error occured";
+            public string StackTrace { get; set; } = "An error occured";
+            public int StatusCode { get; set; } = 400;
+        }
+}
 }
